@@ -185,12 +185,12 @@ void CTappingRecorderDlg::OnBnClickedRegister()
 
 int getCurrentTime()
 {
-
+	// 利用 chrono 或者 ctime 等工具获取当前时间
 }
 
 void writeMs(int time)
 {
-
+	// 先写到字符串，在注销热键的时候再写入文件
 }
 
 
