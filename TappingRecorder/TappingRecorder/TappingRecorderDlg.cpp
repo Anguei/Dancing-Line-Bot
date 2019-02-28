@@ -7,6 +7,8 @@
 #include "TappingRecorderDlg.h"
 #include "afxdialogex.h"
 
+#include <ctime>
+#include <fstream>
 #include <chrono>
 
 #ifdef _DEBUG
@@ -105,6 +107,7 @@ BOOL CTappingRecorderDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	SetDlgItemText(IDC_REGISTER, L"注册热键");
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -165,32 +168,38 @@ void CTappingRecorderDlg::OnBnClickedRegister()
 	// TODO: 在此添加控件通知处理程序代码
 	if (!isRegistered)
 	{
-		isRegistered ^= 1;
-
 		if (RegisterHotKey(GetSafeHwnd(), 0x01, MOD_NOREPEAT, 'J')
-			&& RegisterHotKey(GetSafeHwnd(), 0x02, MOD_NOREPEAT, 'F'))
+			&& RegisterHotKey(GetSafeHwnd(), 0x02, MOD_NOREPEAT, 'F')
+			&& RegisterHotKey(GetSafeHwnd(), 0x03, MOD_NOREPEAT, 'T'))
 		{
-			MessageBox(L"已注册热键 F 和热键 J。\n请开始录制");
+			MessageBox(L"已注册热键 F 和热键 J。\n请开始录制。热键 T 用于结束录制。");
 			SetDlgItemText(IDC_REGISTER, L"取消注册");
+			lastTime = -1;
 		}
 	}
 	else
 	{
-		startTime = -1;
 		UnregisterHotKey(GetSafeHwnd(), 0x01);
 		UnregisterHotKey(GetSafeHwnd(), 0x02);
+		UnregisterHotKey(GetSafeHwnd(), 0x03);
+		SetDlgItemText(IDC_REGISTER, L"注册热键");
 	}
+
+	isRegistered ^= 1;
 }
 
 
-int getCurrentTime()
+int CTappingRecorderDlg::getCurrentTime()
 {
 	// 利用 chrono 或者 ctime 等工具获取当前时间
+	return clock();
 }
 
-void writeMs(int time)
+void CTappingRecorderDlg::writeMs(int time)
 {
 	// 先写到字符串，在注销热键的时候再写入文件
+	timeline += std::to_string(time);
+	timeline += " ";
 }
 
 
@@ -199,11 +208,24 @@ LRESULT CTappingRecorderDlg::OnHotKey(WPARAM wParam, LPARAM lParam)
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (wParam == 1 || wParam == 2)
 	{
-		if (startTime == -1)
+		if (lastTime == -1)
 		{
-			startTime = getCurrentTime();
+			timeline.clear();
+			lastTime = getCurrentTime();
 		}
-		writeMs(getCurrentTime());
+		else
+		{
+			int nowTime = getCurrentTime();
+			writeMs(nowTime - lastTime);
+			lastTime = nowTime;
+		}
+	}
+	else if (wParam == 3)
+	{
+		std::ofstream fout("..\\..\\timeline.txt", std::ios::out);
+		fout << timeline << std::endl;
+		fout.close();
+		OnBnClickedRegister();
 	}
 	return 0;
 }

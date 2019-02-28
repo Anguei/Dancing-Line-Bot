@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string>
+
 
 // CTappingRecorderDlg 对话框
 class CTappingRecorderDlg : public CDialogEx
@@ -33,9 +35,12 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedRegister();
+	int getCurrentTime();
+	void writeMs(int time);
 	LRESULT OnHotKey(WPARAM wParam, LPARAM lParam);
 	// 是否注册过热键
 	int isRegistered = 0;
 	// 第一个点按下的时间
-	int startTime = 0;
+	int lastTime = -1;
+	std::string timeline;
 };
